@@ -1,0 +1,16 @@
+{
+  "name": "Plano 100 dias TJ-SP",
+  "short_name": "Plano TJ-SP",
+  "description": "Plano de estudos para Escrevente Técnico Judiciário do TJ-SP, prova em 14/03/2027.",
+  "lang": "pt-BR",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f2",
+  "theme_color": "#1f5f8b",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
