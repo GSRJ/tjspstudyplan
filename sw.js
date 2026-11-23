@@ -1,4 +1,4 @@
-const CACHE = "plano-tjsp-100d-v9";
+const CACHE = "plano-tjsp-100d-v10";
 const SHELL = ["./", "./index.html", "./questoes-data.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -23,4 +23,10 @@ self.addEventListener("fetch", e => {
     if (r.ok || r.type === "opaque") { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
     return r;
   }).catch(() => hit)));
+});
+/* toque na notificação de estudo: volta para o app aberto ou abre de novo */
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const u = (e.notification.data && e.notification.data.url) || "./";
+  e.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(cs => { const c = cs[0]; return c ? c.focus() : clients.openWindow(u); }));
 });
