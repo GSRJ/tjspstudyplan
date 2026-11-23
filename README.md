@@ -14,7 +14,7 @@ O app funciona no navegador e pode ser instalado no celular ou no tablet. Depois
 
 1. Em Settings > Pages, escolha "Deploy from a branch".
 2. Branch `main`, pasta `/ (root)`. Salve.
-3. Em um ou dois minutos o app abre em `https://SEU-USUARIO.github.io/plano-tjsp-100dias/`.
+3. Em um ou dois minutos o app abre em `https://SEU-USUARIO.github.io/tjsptudyplan/`.
 
 O service worker só roda em https. No GitHub Pages isso já vem pronto.
 
