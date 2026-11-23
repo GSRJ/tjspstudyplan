@@ -86,6 +86,9 @@ summary{cursor:pointer;font-size:13px;color:var(--muted)}
 .aulas li.g{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-top:6px}
 .aulas label{display:flex;gap:8px;align-items:flex-start;padding:3px 0;cursor:pointer}
 .aulas input{margin-top:3px;accent-color:var(--accent)}
+.qgrp{border:1px solid var(--line);border-radius:8px;margin-top:8px;padding:6px 10px;background:var(--paper)}
+.qgrp>summary{cursor:pointer;font-weight:600;font-size:14px;display:flex;justify-content:space-between;gap:10px}
+.qgrp>summary span{font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
 .ql{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
 .qi{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:6px;background:var(--card)}
 .qi.on{opacity:.65}
@@ -374,7 +377,11 @@ function card(it){
       r+="<div class='qrow'><input type='checkbox' id='q"+it.id+"_"+q.c+"' data-q='"+q.c+"'"+(on?" checked":"")+"><label for='q"+it.id+"_"+q.c+"'><b>Q"+q.c+"</b><small class='qp'>"+q.y+" · "+esc(q.p)+(q.k?"":" · "+esc(q.a))+"</small></label><a class='qopen' href='"+QURL+q.c+"' target='_blank' rel='noopener'>Abrir questão</a></div>";
       if(q.g) r+="<details class='qg' data-o='g"+q.c+"'"+op("g"+q.c)+"><summary>Gabarito</summary><p><b>Letra "+q.g+".</b> "+esc(q.j)+"</p></details>";
       return r+"</li>";};
-    h+="<details class='qd'"+op("q"+it.id)+"><summary>Questões Vunesp, por artigo</summary><ul class='ql'>"+main.map(li).join("")+"</ul>";
+    let lista="";
+    if(main.length<=20) lista="<ul class='ql'>"+main.map(li).join("")+"</ul>";
+    else for(let i=0;i<main.length;i+=20){const g=main.slice(i,i+20),gk="g"+it.id+"_"+i,feitas=g.filter(q=>st.q[q.c]).length;
+      lista+="<details class='qgrp' data-o='"+gk+"'"+op(gk)+"><summary>Questões "+(i+1)+" a "+(i+g.length)+"<span>"+feitas+" de "+g.length+(feitas===g.length?" ✓":"")+"</span></summary><ul class='ql'>"+g.map(li).join("")+"</ul></details>";}
+    h+="<details class='qd'"+op("q"+it.id)+"><summary>Questões Vunesp, por artigo ("+main.length+")</summary>"+lista;
     h+="</details>";
   }
   el.innerHTML=h;
