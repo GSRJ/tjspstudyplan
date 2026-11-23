@@ -338,13 +338,23 @@ function todayItem(){const t=localISO(); return DATA.items.filter(i=>i.day===t);
 function currentWeek(){const t=localISO(); for(const [w,[a,b]] of Object.entries(DATA.weeks)){ if(t>=a&&t<=b) return +w;} return t<DATA.weeks[1][0]?1:Object.keys(DATA.weeks).length;}
 function weekProg(w){const its=DATA.items.filter(i=>i.w===w); const d=its.filter(i=>status(i)==="Feito").length; return its.length?d/its.length:0;}
 
+// Redesenha a tela mantendo o item clicado no mesmo lugar da tela.
+function keepRender(el,fn){
+  const box=el.closest("#todaylist,#list,#covlist"); const art=el.closest("article.item");
+  let sel=null;
+  if(el.dataset.q) sel='input[data-q="'+el.dataset.q+'"]'; else if(el.dataset.k) sel='input[data-k="'+el.dataset.k+'"]'; else if(el.dataset.e) sel='input[data-e="'+el.dataset.e+'"]'; else if(art&&art.dataset.id) sel='article.item[data-id="'+art.dataset.id+'"] .st';
+  const top=el.getBoundingClientRect().top;
+  (fn||render)();
+  if(!box||!sel) return;
+  const n=document.getElementById(box.id).querySelector(sel); if(n) window.scrollBy(0,n.getBoundingClientRect().top-top);
+}
 function card(it){
   const s=status(it); const {head,out}=parse(it.c); const aulas=out.filter(x=>x.t==="a");
-  const el=document.createElement("article"); el.className="item"+(s==="Feito"?" done":""); el.style.setProperty("--c","var("+BL[it.b][1]+")");
+  const el=document.createElement("article"); el.className="item"+(s==="Feito"?" done":""); el.dataset.id=it.id; el.style.setProperty("--c","var("+BL[it.b][1]+")");
   const seen=aulas.filter(a=>st.a[it.id+"-"+a.k]).length;
   let h="<div class='row1'><span class='disc'>"+esc(it.d)+"</span><span class='right'><span class='hrs'>"+(it.f==="final"?"2 h":(it.h===2?"2 h":"Bloco "+it.blk+" · 1 h"))+"</span><button type='button' class='st' data-s='"+s+"'>"+s+"</button></span></div>";
   h+="<p class='what'>"+esc(it.o)+"</p>";
-  let hd=head; if(QS[it.o]){ hd=it.o.startsWith("Questões:")?"Sem leitura nova. Faça as questões da lista: penas disciplinares (arts. 251 a 260) e as que ficaram dos dias anteriores. Anote cada erro no caderno com o artigo.":head.replace("Depois, 15 a 20 questões Vunesp desses artigos e anote os erros.","Depois, as questões Vunesp da lista abaixo, na ordem dos artigos. Anote cada erro com o número do artigo."); }
+  let hd=head; if(QS[it.o]){ hd=it.o.startsWith("Questões:")?"Sem leitura nova. Faça as questões da lista, sobre penas disciplinares (arts. 251 a 260), e as que ficaram dos dias anteriores. Anote cada erro no caderno com o artigo.":head.replace("Depois, 15 a 20 questões Vunesp desses artigos e anote os erros.","Depois, as questões Vunesp da lista abaixo, na ordem dos artigos. Anote cada erro com o número do artigo."); }
   if(hd) h+="<p class='how'>"+esc(hd)+"</p>";
   if(aulas.length) h+="<div class='ibar'><div class='bar'><i style='width:"+Math.round(seen/aulas.length*100)+"%'></i></div><span>"+seen+" de "+aulas.length+" aula"+(aulas.length>1?"s":"")+"</span></div>";
   const dd=dueDate(it); if(dd) h+="<div class='ibar'>"+(dd<=localISO()?"<span class='revtag'>Revisar agora</span>":"<span>Revisão "+((st.r[it.id]||0)+1)+" em "+fmt(dd)+"</span>")+"</div>";
@@ -365,7 +375,6 @@ function card(it){
       if(q.g) r+="<details class='qg' data-o='g"+q.c+"'"+op("g"+q.c)+"><summary>Gabarito</summary><p><b>Letra "+q.g+".</b> "+esc(q.j)+"</p></details>";
       return r+"</li>";};
     h+="<details class='qd'"+op("q"+it.id)+"><summary>Questões Vunesp, por artigo</summary><ul class='ql'>"+main.map(li).join("")+"</ul>";
-    if(extra.length) h+="<p class='how' style='margin-top:8px'>Fora do recorte do edital (férias, licenças, vencimentos, aposentadoria e outros). Opcional, só se sobrar tempo. Estas não têm gabarito comentado aqui.</p><ul class='ql'>"+extra.map(li).join("")+"</ul>";
     h+="</details>";
   }
   el.innerHTML=h;
@@ -375,14 +384,14 @@ function card(it){
     if(cb.checked) st.q[cb.dataset.q]=true; else delete st.q[cb.dataset.q];
     if(!aulas.length){ const main=qs.filter(q=>!q.x); const n=main.filter(q=>st.q[q.c]).length;
       if(n===main.length) setStatus(it,"Feito"); else if(n>0&&status(it)==="A fazer") setStatus(it,"Em andamento"); else if(n<main.length&&status(it)==="Feito") setStatus(it,"Em andamento"); }
-    save(); render();}));
-  const det=el.querySelector("details:not(.qd)"); if(det) det.addEventListener("toggle",()=>{openState[it.id]=det.open;});
-  el.querySelector(".st").addEventListener("click",()=>{setStatus(it,ORDER[(ORDER.indexOf(status(it))+1)%3]); save(); render();});
+    save(); keepRender(cb);}));
+  const det=el.querySelector("details:not(.qd):not(.qa):not(.qg)"); if(det) det.addEventListener("toggle",()=>{openState[it.id]=det.open;});
+  const stb=el.querySelector(".st"); stb.addEventListener("click",()=>{setStatus(it,ORDER[(ORDER.indexOf(status(it))+1)%3]); save(); keepRender(stb);});
   el.querySelectorAll("input[data-k]").forEach(cb=>cb.addEventListener("change",()=>{
     if(cb.checked) st.a[cb.dataset.k]=true; else delete st.a[cb.dataset.k];
     const all=aulasOf(it); const n=all.filter(k=>st.a[k]).length;
     if(n===all.length) setStatus(it,"Feito"); else if(n>0&&status(it)==="A fazer") setStatus(it,"Em andamento"); else if(status(it)==="Feito") setStatus(it,"Em andamento");
-    save(); render();}));
+    save(); keepRender(cb);}));
   return el;
 }
 function renderToday(){
@@ -417,13 +426,14 @@ function renderRev(){
   box.innerHTML=h;
   box.querySelectorAll("button[data-r]").forEach(b=>b.addEventListener("click",()=>{const id=+b.dataset.r; st.r[id]=(st.r[id]||0)+1; save(); render();}));
 }
+let lastWeek=null;
 function renderWeeks(sel){
   const box=document.getElementById("weeks"); box.innerHTML=""; const cw=currentWeek(); const n=Object.keys(DATA.weeks).length;
   for(let w=1;w<=n;w++){ const [a,b]=DATA.weeks[w]; const bt=document.createElement("button"); bt.type="button"; bt.className="wk"+(w===cw?" cur":"");
     bt.setAttribute("aria-pressed",w===sel?"true":"false");
     bt.innerHTML="<b>"+(w<=15?"Sem. "+w:"Final")+"</b><span>"+fmt(a)+(a!==b?" a "+fmt(b):"")+"</span><div class='bar'><i style='width:"+Math.round(weekProg(w)*100)+"%'></i></div>";
     bt.addEventListener("click",()=>{location.hash="semana-"+w;}); box.appendChild(bt);
-    if(w===sel) setTimeout(()=>bt.scrollIntoView({block:"nearest",inline:"center"}),0);}
+    if(w===sel&&lastWeek!==sel) setTimeout(()=>{box.scrollLeft=bt.offsetLeft-box.clientWidth/2+bt.offsetWidth/2; box.scrollTop=bt.offsetTop-box.clientHeight/2+bt.offsetHeight/2;},0);}
 }
 function renderFilters(){const box=document.getElementById("filters"); box.innerHTML="";
   [["all","Tudo",null]].concat(Object.entries(BL).map(([k,v])=>[k,v[0],v[1]])).forEach(([k,label,c])=>{const b=document.createElement("button"); b.type="button"; b.className="chip"; b.setAttribute("aria-pressed",filter===k?"true":"false"); if(c) b.style.setProperty("--c","var("+c+")"); b.innerHTML=(c?"<i></i>":"")+label; b.addEventListener("click",()=>{filter=k; render();}); box.appendChild(b);});}
@@ -465,14 +475,14 @@ function renderCov(){
     d.innerHTML="<summary><span class='nm'><b>"+esc(nm)+"</b><span>"+esc(sub)+(out?" · <span class='outn'>"+out+" fora do plano</span>":"")+"</span></span><span class='sbar'><i class='a' style='width:"+(ok/n*100)+"%'></i><i class='p' style='width:"+(go/n*100)+"%'></i></span><span class='ct'>"+ok+" de "+n+"</span></summary><ul>"+li+"</ul>";
     box.appendChild(d);
   });
-  box.querySelectorAll("input[data-e]").forEach(cb=>cb.addEventListener("change",()=>{ if(cb.checked) st.e[cb.dataset.e]=true; else delete st.e[cb.dataset.e]; save(); renderCov();}));
+  box.querySelectorAll("input[data-e]").forEach(cb=>cb.addEventListener("change",()=>{ if(cb.checked) st.e[cb.dataset.e]=true; else delete st.e[cb.dataset.e]; save(); keepRender(cb,renderCov);}));
   const t=T.tot;
   document.getElementById("covbar").innerHTML="<i class='a' style='width:"+(T.ok/t*100)+"%'></i><i class='p' style='width:"+(T.go/t*100)+"%'></i>";
   document.getElementById("covhint").textContent=T.ok+" de "+t+" itens estudados"+(T.out-T.outok?" · "+(T.out-T.outok)+" fora do plano":"");
   document.getElementById("covsum").textContent="Cada item fica marcado sozinho quando todos os blocos dele estiverem como Feito. Os "+T.out+" itens fora do plano não têm bloco próprio: marque você mesmo quando estudar por questões.";
 }
 function selWeek(){const m=location.hash.match(/^#semana-(\d+)$/); const n=Object.keys(DATA.weeks).length; const w=m?+m[1]:currentWeek(); return Math.min(n,Math.max(1,w));}
-function render(){const w=selWeek(); renderTop(); renderToday(); renderRev(); renderWeeks(w); renderFilters(); renderList(w); renderCov();}
+function render(){const w=selWeek(); renderTop(); renderToday(); renderRev(); renderWeeks(w); lastWeek=w; renderFilters(); renderList(w); renderCov();}
 window.addEventListener("hashchange",render);
 window.addEventListener("storage",ev=>{ if(ev.key===KEY){ try{st=Object.assign({s:{},a:{},d:{},r:{},e:{},q:{}},JSON.parse(ev.newValue||"{}"));}catch(e){} render(); }});
 document.getElementById("reset").addEventListener("click",()=>document.getElementById("confirm").classList.add("on"));
