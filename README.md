@@ -6,7 +6,9 @@ O app funciona no navegador e pode ser instalado no celular ou no tablet. Depois
 
 ## Arquivos
 
-- `index.html`: o app inteiro (plano, progresso, revisões de 7 e 30 dias)
+- `index.html`: o plano (progresso, revisões de 7 e 30 dias, edital item por item)
+- `questoes.html`: as questões Vunesp do Gran de um bloco, por artigo. Abre pelo botão "Abrir página de questões deste bloco" no plano, ou sem parâmetro para ver todos os blocos
+- `questoes-data.js`: a lista de questões por bloco, usada pelas duas páginas
 - `manifest.webmanifest` e `sw.js`: instalação e uso offline
 - `icon-*.png` e `apple-touch-icon.png`: ícones
 
